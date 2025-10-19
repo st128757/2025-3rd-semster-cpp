@@ -38,28 +38,23 @@ jobs:
           
       - name: Build with sanitizers
         run: |
-          cd Homework_1
-          
+          cd Project1
           if [ "${{ matrix.sanitizer }}" = "address" ]; then
-            # Сборка с AddressSanitizer
-            clang++ -fsanitize=address -fno-omit-frame-pointer -g -O2 -Wall -Wextra -Werror Source.cpp -o Test
+            clang++ -fsanitize=address -fno-omit-frame-pointer -g -O2 -Wall -Wextra -Werror Source.cpp -o Test-asan
           elif [ "${{ matrix.sanitizer }}" = "undefined" ]; then
-            # Сборка с UndefinedBehaviorSanitizer  
-            clang++ -fsanitize=undefined -fno-omit-frame-pointer -g -O2 -Wall -Wextra -Werror Source.cpp -o Test
+            clang++ -fsanitize=undefined -fno-omit-frame-pointer -g -O2 -Wall -Wextra -Werror Source.cpp -o Test-ubsan
           fi
 
       - name: Run tests with sanitizers
         run: |
-          cd Homework_1
-          
+          cd Project1
           if [ "${{ matrix.sanitizer }}" = "address" ]; then
             export ASAN_OPTIONS=detect_leaks=1:halt_on_error=1
+            ./Test-asan
           elif [ "${{ matrix.sanitizer }}" = "undefined" ]; then
             export UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1
+            ./Test-ubsan
           fi
-          
-          # Запуск программы (тесты встроены в саму программу)
-          ./Test
           
   build-normal:
     runs-on: ubuntu-latest
@@ -74,10 +69,10 @@ jobs:
 
     - name: Build
       run: |
-        cd Project 1 
+        cd Project1
         make
 
     - name: Run tests
       run: |
-        cd Project 1
+        cd Project1
         ./Test
