@@ -74,5 +74,5 @@ jobs:
 
     - name: Run tests
       run: |
-        cd Project1
+        cd 25.10.19_TEST/Project1
         ./Test
