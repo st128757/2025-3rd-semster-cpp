@@ -11,7 +11,7 @@ OBJ = $(SRC:.cpp=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $(OBJ) $(LDFLAGS) -o $@
+	$(CXX) $(OBJ) $(CXXFLAGS) $(LDFLAGS) -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
