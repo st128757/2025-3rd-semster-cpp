@@ -1,0 +1,46 @@
+name: C++ CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Скачиваем репозиторий
+    - uses: actions/checkout@v4
+
+    # 2. Устанавливаем инструменты
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format cppcheck
+
+    # 3. Проверка стиля (Google Code Style)
+    # Команда применяет стиль ко всем .cpp и .h файлам в папке TEST.
+    # Если git видит изменения после этого (git diff), значит стиль был нарушен -> Ошибка.
+    - name: Check Google Code Style
+      run: |
+        find TEST -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+        git diff --exit-code
+
+    # 4. Линтер (Cppcheck)
+    # Ищет ошибки, неинициализированные переменные и т.д.
+    - name: Run Cppcheck (Linter)
+      run: cppcheck --enable=all --inconclusive --error-exitcode=1 TEST/
+
+    # 5. Сборка с Санитайзерами (AddressSanitizer + UndefinedBehaviorSanitizer)
+    # Мы передаем флаги прямо в make.
+    - name: Build with Sanitizers
+      run: |
+        make -C TEST clean
+        make -C TEST CXX=g++ CXXFLAGS="-g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer"
+
+    # 6. Запуск программы (чтобы санитайзеры проверили выполнение)
+    # Замените 'main' на имя вашего исполняемого файла, если оно другое
+    - name: Run Program
+      run: ./TEST/main
