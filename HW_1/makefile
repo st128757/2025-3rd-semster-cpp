@@ -11,10 +11,10 @@ OBJ = $(SRC:.cpp=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-(TAB)$(CXX) $(LDFLAGS) $(OBJ) -o $@
+  (TAB)$(CXX) $(LDFLAGS) $(OBJ) -o $@
 
 %.o: %.cpp
-(TAB)$(CXX) $(CXXFLAGS) -c $< -o $@
+  (TAB)$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-(TAB)rm -f $(TARGET) $(OBJ)
+  (TAB)rm -f $(TARGET) $(OBJ)
