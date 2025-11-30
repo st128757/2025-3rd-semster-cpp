@@ -98,7 +98,8 @@ double Evaluate(const std::string& expression, bool* error,
   *error = false;
   *error_msg = "";
 
-  std::string symbol;
+  // Объявление symbol перемещено внутрь цикла или в место первого использования
+  // для сужения области видимости (исправление variableScope).
   int pos = 0;
 
   while (pos < expression.size()) {
@@ -112,7 +113,8 @@ double Evaluate(const std::string& expression, bool* error,
       ++pos;
     }
 
-    symbol = expression.substr(symbol_start, pos - symbol_start);
+    // Объявление symbol здесь, в месте, где она используется.
+    std::string symbol = expression.substr(symbol_start, pos - symbol_start);
 
     if (symbol.empty()) {
       continue;
@@ -166,7 +168,13 @@ std::string DoubleToString(double res) {
   int dot_pos = str.find('.');
 
   if (dot_pos != std::string::npos) {
-    str = str.substr(0, str.find_last_not_of('0') + 1);
+    // Исправление uselessCallsSubstr: Используем resize() вместо substr
+    // для удаления конечных нулей.
+    size_t last_non_zero = str.find_last_not_of('0');
+    if (last_non_zero != std::string::npos) {
+      str.resize(last_non_zero + 1);
+    }
+
     if (str.back() == '.') {
       str.pop_back();
     }
