@@ -49,7 +49,7 @@ jobs:
 
     # 4. Линтер (теперь используем ${{ env.SRC_DIR }})
     - name: Run Cppcheck (Linter)
-      run: cppcheck --enable=all --inconclusive --error-exitcode=1 ${{ env.SRC_DIR }}/ --suppress=missingInclude,missingIncludeSystem
+      run: cppcheck --enable=all --inconclusive --error-exitcode=1 ${{ env.SRC_DIR }}/ --suppress=missingInclude --suppress=missingIncludeSystem
   
     # 5. Сборка с Санитайзерами (теперь используем ${{ env.SRC_DIR }})
     - name: Build with Sanitizers
