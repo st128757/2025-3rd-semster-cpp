@@ -3,7 +3,7 @@ CXXFLAGS ?= -std=c++17 -Wall -Wextra
 LDFLAGS = -lm
 
 TARGET = main
-SRC = main.cpp
+SRC = Source.cpp
 OBJ = $(SRC:.cpp=.o)
 
 .PHONY: all clean
