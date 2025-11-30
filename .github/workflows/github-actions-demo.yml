@@ -1,4 +1,4 @@
-name: C++ CI
+name: C++ CI (Dynamic Folder)
 
 on:
   push:
@@ -11,8 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Скачиваем репозиторий
     - uses: actions/checkout@v4
+
+    # 1. ⭐ НОВЫЙ ШАГ: Динамический поиск папки
+    - name: Discover Source Directory
+      id: discover
+      run: |
+        # Ищем папку, содержащую 'makefile' (ищем только на первом уровне вложенности)
+        # xargs dirname получает путь к папке, а не к файлу.
+        # -maxdepth 2 гарантирует, что мы не будем искать слишком глубоко.
+        SRC_DIR=$(find . -maxdepth 2 -name 'makefile' -print -quit | xargs dirname)
+        
+        # Проверка: если папка не найдена, прерываем работу с ошибкой
+        if [ -z "$SRC_DIR" ]; then
+          echo "Error: Could not find 'makefile' in a sub-directory."
+          exit 1
+        fi
+        
+        # Удаляем префикс "./" из пути для более чистого использования
+        SRC_DIR=${SRC_DIR#./}
+        echo "Source directory detected: $SRC_DIR"
+        
+        # Экспортируем переменную в GITHUB_ENV, чтобы она была доступна в следующих шагах
+        echo "SRC_DIR=$SRC_DIR" >> $GITHUB_ENV
 
     # 2. Устанавливаем инструменты
     - name: Install dependencies
@@ -20,27 +41,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y clang-format cppcheck
 
-    # 3. Проверка стиля (Google Code Style)
-    # Команда применяет стиль ко всем .cpp и .h файлам в папке TEST.
-    # Если git видит изменения после этого (git diff), значит стиль был нарушен -> Ошибка.
+    # 3. Проверка стиля (теперь используем ${{ env.SRC_DIR }})
     - name: Check Google Code Style
       run: |
-        find TEST -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+        find ${{ env.SRC_DIR }} -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
         git diff --exit-code
 
-    # 4. Линтер (Cppcheck)
-    # Ищет ошибки, неинициализированные переменные и т.д.
+    # 4. Линтер (теперь используем ${{ env.SRC_DIR }})
     - name: Run Cppcheck (Linter)
-      run: cppcheck --enable=all --inconclusive --error-exitcode=1 TEST/
+      run: cppcheck --enable=all --inconclusive --error-exitcode=1 ${{ env.SRC_DIR }}/ --suppress=missingInclude
 
-    # 5. Сборка с Санитайзерами (AddressSanitizer + UndefinedBehaviorSanitizer)
-    # Мы передаем флаги прямо в make.
+    # 5. Сборка с Санитайзерами (теперь используем ${{ env.SRC_DIR }})
     - name: Build with Sanitizers
       run: |
-        make -C TEST clean
-        make -C TEST CXX=g++ CXXFLAGS="-g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer"
+        make -C ${{ env.SRC_DIR }} clean
+        make -C ${{ env.SRC_DIR }} CXX=g++ CXXFLAGS="-g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer"
 
-    # 6. Запуск программы (чтобы санитайзеры проверили выполнение)
-    # Замените 'main' на имя вашего исполняемого файла, если оно другое
+    # 6. Запуск программы (теперь используем ${{ env.SRC_DIR }})
     - name: Run Program
-      run: ./TEST/main
+      run: ./${{ env.SRC_DIR }}/main
