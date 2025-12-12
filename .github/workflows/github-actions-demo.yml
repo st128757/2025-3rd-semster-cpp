@@ -47,7 +47,7 @@ jobs:
         find ${{ env.SRC_DIR }} -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
         git diff --exit-code
 
-    # 4. Линтер (ОБНОВЛЕНО: добавлены suppress)
+   # 4. Линтер (теперь используем ${{ env.SRC_DIR }})
     - name: Run Cppcheck (Linter)
       run: |
         cppcheck \
@@ -56,8 +56,7 @@ jobs:
         --error-exitcode=1 \
         ${{ env.SRC_DIR }}/ \
         --suppress=missingIncludeSystem \
-        --suppress=noExplicitConstructor \
-        --suppress=useStlAlgorithmC_DIR }}/ --suppress=missingIncludeSystem
+        --suppress=useStlAlgorithmm
   
     # 5. Сборка с Санитайзерами (теперь используем ${{ env.SRC_DIR }})
     - name: Build with Sanitizers
