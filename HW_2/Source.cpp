@@ -137,7 +137,7 @@ class TextEditor {
 
     if (cursor_col_ < current_line.length()) {
       std::string new_line = current_line.substr(cursor_col_);
-      current_line = current_line.substr(0, cursor_col_);
+      current_line.resize(cursor_col_);
       lines_.insert(lines_.begin() + cursor_row_ + 1, new_line);
     } else {
       lines_.insert(lines_.begin() + cursor_row_ + 1, "");
