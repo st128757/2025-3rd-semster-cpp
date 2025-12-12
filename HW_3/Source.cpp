@@ -3,6 +3,7 @@
 #include <vector>
 
 class BankAccount {
+<<<<<<< HEAD
  private:
   std::string account_number_;
   double balance_;
@@ -123,3 +124,128 @@ int main() {
 
   return 0;
 }
+== == == = private : std::string account_number_;
+double balance_;
+std::string account_holder_;
+
+public:
+// Êîíñòðóêòîð
+BankAccount(const std::string& a = "NONUMBER", const double b = 0.0,
+            const std::string& c = "NOHOLDER")
+    : account_number_(a), balance_(b), account_holder_(c) {}
+
+// Ìåòîäû-ìóòàòîðû (èçìåíÿþò ñîñòîÿíèå)
+void Deposit(double cash) {
+  // Â C++ ïðîñòûå òèïû (double) ëó÷øå ïåðåäàâàòü
+  // ïî çíà÷åíèþ, à íå ïî ññûëêå
+  balance_ += cash;
+  std::cout << "Operation is completed\n";
+}
+
+void Withdraw(double amount) {
+  if (balance_ - amount < 0) {
+    std::cout
+        << "It's not enough money on the balance. Operation wasn't completed\n";
+  } else {
+    balance_ -= amount;
+    std::cout << "Operation is completed\n";
+  }
+}
+
+// Ìåòîäû-àêñåññîðû (íå èçìåíÿþò ñîñòîÿíèå) -
+// ïîìå÷åíû êàê const
+double GetBalance() const { return balance_; }
+
+std::string GetAccountHolder() const { return account_holder_; }
+
+std::string GetAccountNumber() const { return account_number_; }
+
+void PrintAccountInfo() const {
+  std::cout << "Your balance is " << balance_ << "\n";
+  std::cout << account_holder_ << "\n";
+  std::cout << account_number_ << "\n";
+}
+}
+;
+
+class Bank {
+ private:
+  std::vector<BankAccount> accounts_;
+
+ public:
+  void AddAccount(const std::string& acc_name, const std::string& acc_number,
+                  double balance) {
+    // Èñïîëüçóåì êîíñòàíòíûå ññûëêè è
+    // ïåðåäà÷ó ïî çíà÷åíèþ äëÿ îïòèìèçàöèè
+    BankAccount A(acc_number, balance, acc_name);
+    accounts_.push_back(A);
+  }
+
+  void GetTotalBalance() const {
+    double total = 0.0;
+    // Èñïîëüçóåì const BankAccount& äëÿ èòåðàöèè, òàê
+    // êàê ìû íå ìåíÿåì îáúåêòû
+    for (const BankAccount& account : accounts_) {
+      total += account.GetBalance();
+    }
+    std::cout << "Total balance is: " << total << "\n";
+  }
+
+  void PrintAllAccounts() const {
+    for (const BankAccount& account : accounts_) {
+      std::cout << "Holdername: " << account.GetAccountHolder() << "\n"
+                << "Accountnumber: " << account.GetAccountNumber() << "\n"
+                << "Balance: " << account.GetBalance() << "\n";
+    }
+  }
+};
+
+int main() {
+  // Ñîçäàåì áàíê
+  Bank bank;
+
+  // Äàííûå äëÿ ñ÷åòîâ
+  std::string name1 = "John Doe";
+  std::string number1 = "123456789";
+  std::string name2 = "Jane Smith";
+  std::string number2 = "987654321";
+  std::string name3 = "Bob Johnson";
+  std::string number3 = "555555555";
+  double balance1 = 1000.0;
+  double balance2 = 2500.0;
+  double balance3 = 500.0;
+
+  // Äîáàâëÿåì ñ÷åòà â áàíê
+  bank.AddAccount(name1, number1, balance1);
+  bank.AddAccount(name2, number2, balance2);
+  bank.AddAccount(name3, number3, balance3);
+
+  // Âûâîäèì èíôîðìàöèþ î âñåõ ñ÷åòàõ
+  bank.PrintAllAccounts();
+
+  // Ïðîâåðÿåì îáùèé áàëàíñ
+  bank.GetTotalBalance();
+
+  // Äåìîíñòðàöèÿ îïåðàöèé ñ îäíèì ñ÷åòîì
+  std::cout << "\n=== ACCOUNT OPERATIONS ===\n";
+  BankAccount account("111111111", 2000.0, "Alice Brown");
+  account.PrintAccountInfo();
+
+  double deposit = 500.0;
+  std::cout << "Depositing " << deposit << "...\n";
+  account.Deposit(deposit);
+
+  double withdraw = 300.0;
+  std::cout << "Withdrawing " << withdraw << "...\n";
+  account.Withdraw(withdraw);
+
+  // Ïîïûòêà ñíÿòü ñëèøêîì ìíîãî
+  double big_withdraw = 3000.0;
+  std::cout << "Attempting to withdraw " << big_withdraw << "...\n";
+  account.Withdraw(big_withdraw);
+
+  account.PrintAccountInfo();
+
+  return 0;
+}
+>>>>>>> dbdbc1deaf4d3f46cd5c423f4275f66a135c5b73
