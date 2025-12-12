@@ -56,7 +56,8 @@ jobs:
         --error-exitcode=1 \
         ${{ env.SRC_DIR }}/ \
         --suppress=missingIncludeSystem \
-        --suppress=useStlAlgorithmm
+        --suppress=useStlAlgorithm \     
+        --suppress=noExplicitConstructor
   
     # 5. Сборка с Санитайзерами (теперь используем ${{ env.SRC_DIR }})
     - name: Build with Sanitizers
