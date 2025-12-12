@@ -1,8 +1,9 @@
-#include <vector>
-#include <string>
+#include <conio.h>
+
 #include <algorithm>
 #include <iostream>
-#include <conio.h>
+#include <string>
+#include <vector>
 
 class TextEditor {
  private:
@@ -111,8 +112,8 @@ class TextEditor {
     for (int i = 0; i < k; i++) {
       if (cursor_row_ > 0) {
         cursor_row_--;
-        cursor_col_ = std::min(
-            cursor_col_, static_cast<int>(lines_[cursor_row_].length()));
+        cursor_col_ = std::min(cursor_col_,
+                               static_cast<int>(lines_[cursor_row_].length()));
       }
     }
     RefreshDisplay();
@@ -123,8 +124,8 @@ class TextEditor {
     for (int i = 0; i < k; i++) {
       if (cursor_row_ < lines_.size() - 1) {
         cursor_row_++;
-        cursor_col_ = std::min(
-            cursor_col_, static_cast<int>(lines_[cursor_row_].length()));
+        cursor_col_ = std::min(cursor_col_,
+                               static_cast<int>(lines_[cursor_row_].length()));
       }
     }
     RefreshDisplay();
