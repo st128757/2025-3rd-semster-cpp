@@ -9,15 +9,15 @@ private:
     std::string account_holder_;
 
 public:
-    // Конструктор
+    // ГЉГ®Г­Г±ГІГ°ГіГЄГІГ®Г°
     BankAccount(const std::string& a = "NONUMBER", const double b = 0.0,
         const std::string& c = "NOHOLDER")
         : account_number_(a), balance_(b), account_holder_(c) {
     }
 
-    // Методы-мутаторы (изменяют состояние)
+    // ГЊГҐГІГ®Г¤Г»-Г¬ГіГІГ ГІГ®Г°Г» (ГЁГ§Г¬ГҐГ­ГїГѕГІ Г±Г®Г±ГІГ®ГїГ­ГЁГҐ)
     void Deposit(double cash) {
-        // В C++ простые типы (double) лучше передавать по значению, а не по ссылке
+        // Г‚ C++ ГЇГ°Г®Г±ГІГ»ГҐ ГІГЁГЇГ» (double) Г«ГіГ·ГёГҐ ГЇГҐГ°ГҐГ¤Г ГўГ ГІГј ГЇГ® Г§Г­Г Г·ГҐГ­ГЁГѕ, Г  Г­ГҐ ГЇГ® Г±Г±Г»Г«ГЄГҐ
         balance_ += cash;
         std::cout << "Operation is completed\n";
     }
@@ -33,7 +33,7 @@ public:
         }
     }
 
-    // Методы-аксессоры (не изменяют состояние) - помечены как const
+    // ГЊГҐГІГ®Г¤Г»-Г ГЄГ±ГҐГ±Г±Г®Г°Г» (Г­ГҐ ГЁГ§Г¬ГҐГ­ГїГѕГІ Г±Г®Г±ГІГ®ГїГ­ГЁГҐ) - ГЇГ®Г¬ГҐГ·ГҐГ­Г» ГЄГ ГЄ const
     double GetBalance() const { return balance_; }
 
     std::string GetAccountHolder() const { return account_holder_; }
@@ -54,14 +54,14 @@ private:
 public:
     void AddAccount(const std::string& acc_name, const std::string& acc_number,
         double balance) {
-        // Используем константные ссылки и передачу по значению для оптимизации
+        // Г€Г±ГЇГ®Г«ГјГ§ГіГҐГ¬ ГЄГ®Г­Г±ГІГ Г­ГІГ­Г»ГҐ Г±Г±Г»Г«ГЄГЁ ГЁ ГЇГҐГ°ГҐГ¤Г Г·Гі ГЇГ® Г§Г­Г Г·ГҐГ­ГЁГѕ Г¤Г«Гї Г®ГЇГІГЁГ¬ГЁГ§Г Г¶ГЁГЁ
         BankAccount A(acc_number, balance, acc_name);
         accounts_.push_back(A);
     }
 
     void GetTotalBalance() const {
         double total = 0.0;
-        // Используем const BankAccount& для итерации, так как мы не меняем объекты
+        // Г€Г±ГЇГ®Г«ГјГ§ГіГҐГ¬ const BankAccount& Г¤Г«Гї ГЁГІГҐГ°Г Г¶ГЁГЁ, ГІГ ГЄ ГЄГ ГЄ Г¬Г» Г­ГҐ Г¬ГҐГ­ГїГҐГ¬ Г®ГЎГєГҐГЄГІГ»
         for (const BankAccount& account : accounts_) {
             total += account.GetBalance();
         }
@@ -78,10 +78,10 @@ public:
 };
 
 int main() {
-    // Создаем банк
+    // Г‘Г®Г§Г¤Г ГҐГ¬ ГЎГ Г­ГЄ
     Bank bank;
 
-    // Данные для счетов
+    // Г„Г Г­Г­Г»ГҐ Г¤Г«Гї Г±Г·ГҐГІГ®Гў
     std::string name1 = "John Doe";
     std::string number1 = "123456789";
     std::string name2 = "Jane Smith";
@@ -92,18 +92,18 @@ int main() {
     double balance2 = 2500.0;
     double balance3 = 500.0;
 
-    // Добавляем счета в банк
+    // Г„Г®ГЎГ ГўГ«ГїГҐГ¬ Г±Г·ГҐГІГ  Гў ГЎГ Г­ГЄ
     bank.AddAccount(name1, number1, balance1);
     bank.AddAccount(name2, number2, balance2);
     bank.AddAccount(name3, number3, balance3);
 
-    // Выводим информацию о всех счетах
+    // Г‚Г»ГўГ®Г¤ГЁГ¬ ГЁГ­ГґГ®Г°Г¬Г Г¶ГЁГѕ Г® ГўГ±ГҐГµ Г±Г·ГҐГІГ Гµ
     bank.PrintAllAccounts();
 
-    // Проверяем общий баланс
+    // ГЏГ°Г®ГўГҐГ°ГїГҐГ¬ Г®ГЎГ№ГЁГ© ГЎГ Г«Г Г­Г±
     bank.GetTotalBalance();
 
-    // Демонстрация операций с одним счетом
+    // Г„ГҐГ¬Г®Г­Г±ГІГ°Г Г¶ГЁГї Г®ГЇГҐГ°Г Г¶ГЁГ© Г± Г®Г¤Г­ГЁГ¬ Г±Г·ГҐГІГ®Г¬
     std::cout << "\n=== ACCOUNT OPERATIONS ===\n";
     BankAccount account("111111111", 2000.0, "Alice Brown");
     account.PrintAccountInfo();
@@ -116,7 +116,7 @@ int main() {
     std::cout << "Withdrawing " << withdraw << "...\n";
     account.Withdraw(withdraw);
 
-    // Попытка снять слишком много
+    // ГЏГ®ГЇГ»ГІГЄГ  Г±Г­ГїГІГј Г±Г«ГЁГёГЄГ®Г¬ Г¬Г­Г®ГЈГ®
     double big_withdraw = 3000.0;
     std::cout << "Attempting to withdraw " << big_withdraw << "...\n";
     account.Withdraw(big_withdraw);
