@@ -5,255 +5,231 @@
 #include <conio.h>
 
 class TextEditor {
-private:
-    std::vector<std::string> lines;
-    int cursor_row;
-    int cursor_col;
+ private:
+  std::vector<std::string> lines_;
+  int cursor_row_;
+  int cursor_col_;
 
-public:
-    TextEditor() {
-        lines.push_back("");
-        cursor_row = 0;
-        cursor_col = 0;
-    }
+ public:
+  TextEditor() : lines_{""}, cursor_row_(0), cursor_col_(0) {}
 
-    // Обработка ввода с клавиатуры
-    void HandleKeyPress(char key) {
-        switch (key) {
-        case 8:   // Backspace
-            DeleteText(1);
-            break;
-        case 13:  // Enter
-            AddNewLine();
-            break;
-        case 77:  // Стрелка вправо
-            CursorRight(1);
-            break;
-        case 75:  // Стрелка влево
-            CursorLeft(1);
-            break;
-        case 72:  // Стрелка вверх
-            CursorUp(1);
-            break;
-        case 80:  // Стрелка вниз
-            CursorDown(1);
-            break;
-        default:
-            // Обычный символ
-            if (key >= 32 && key <= 126) {
-                AddText(std::string(1, key));
-            }
-            break;
+  void HandleKeyPress(char key) {
+    switch (key) {
+      case 8:
+        DeleteText(1);
+        break;
+      case 13:
+        AddNewLine();
+        break;
+      case 77:
+        CursorRight(1);
+        break;
+      case 75:
+        CursorLeft(1);
+        break;
+      case 72:
+        CursorUp(1);
+        break;
+      case 80:
+        CursorDown(1);
+        break;
+      default:
+        if (key >= 32 && key <= 126) {
+          AddText(std::string(1, key));
         }
+        break;
+    }
+  }
+
+  void AddText(std::string text) {
+    std::string& current_line = lines_[cursor_row_];
+
+    if (cursor_col_ < current_line.length()) {
+      std::string prefix = current_line.substr(0, cursor_col_);
+      std::string suffix = current_line.substr(cursor_col_);
+      current_line = prefix + text + suffix;
+    } else {
+      current_line += text;
     }
 
-    void AddText(std::string text) {
-        std::string& current_line = lines[cursor_row];
+    cursor_col_ += text.length();
+    RefreshDisplay();
+  }
 
-        if (cursor_col < current_line.length()) {
-            std::string prefix = current_line.substr(0, cursor_col);
-            std::string suffix = current_line.substr(cursor_col);
-            current_line = prefix + text + suffix;
+  int DeleteText(int k) {
+    int deleted = 0;
+
+    for (int i = 0; i < k; i++) {
+      if (cursor_col_ > 0) {
+        std::string& current_line = lines_[cursor_row_];
+        current_line.erase(cursor_col_ - 1, 1);
+        cursor_col_--;
+        deleted++;
+      } else if (cursor_row_ > 0) {
+        std::string& prev_line = lines_[cursor_row_ - 1];
+        std::string& current_line = lines_[cursor_row_];
+
+        cursor_col_ = prev_line.length();
+        prev_line += current_line;
+        lines_.erase(lines_.begin() + cursor_row_);
+        cursor_row_--;
+        deleted++;
+      }
+    }
+
+    RefreshDisplay();
+    return deleted;
+  }
+
+  std::string CursorLeft(int k) {
+    for (int i = 0; i < k; i++) {
+      if (cursor_col_ > 0) {
+        cursor_col_--;
+      } else if (cursor_row_ > 0) {
+        cursor_row_--;
+        cursor_col_ = lines_[cursor_row_].length();
+      }
+    }
+    RefreshDisplay();
+    return GetTextBeforeCursor();
+  }
+
+  std::string CursorRight(int k) {
+    for (int i = 0; i < k; i++) {
+      if (cursor_col_ < lines_[cursor_row_].length()) {
+        cursor_col_++;
+      } else if (cursor_row_ < lines_.size() - 1) {
+        cursor_row_++;
+        cursor_col_ = 0;
+      }
+    }
+    RefreshDisplay();
+    return GetTextBeforeCursor();
+  }
+
+  std::string CursorUp(int k) {
+    for (int i = 0; i < k; i++) {
+      if (cursor_row_ > 0) {
+        cursor_row_--;
+        cursor_col_ = std::min(
+            cursor_col_, static_cast<int>(lines_[cursor_row_].length()));
+      }
+    }
+    RefreshDisplay();
+    return GetTextBeforeCursor();
+  }
+
+  std::string CursorDown(int k) {
+    for (int i = 0; i < k; i++) {
+      if (cursor_row_ < lines_.size() - 1) {
+        cursor_row_++;
+        cursor_col_ = std::min(
+            cursor_col_, static_cast<int>(lines_[cursor_row_].length()));
+      }
+    }
+    RefreshDisplay();
+    return GetTextBeforeCursor();
+  }
+
+  void AddNewLine() {
+    std::string& current_line = lines_[cursor_row_];
+
+    if (cursor_col_ < current_line.length()) {
+      std::string new_line = current_line.substr(cursor_col_);
+      current_line = current_line.substr(0, cursor_col_);
+      lines_.insert(lines_.begin() + cursor_row_ + 1, new_line);
+    } else {
+      lines_.insert(lines_.begin() + cursor_row_ + 1, "");
+    }
+
+    cursor_row_++;
+    cursor_col_ = 0;
+    RefreshDisplay();
+  }
+
+ private:
+  std::string GetTextBeforeCursor() {
+    std::string& current_line = lines_[cursor_row_];
+    int start_pos = std::max(0, cursor_col_ - 10);
+    return current_line.substr(start_pos, cursor_col_ - start_pos);
+  }
+
+  void RefreshDisplay() {
+    system("cls");
+
+    std::cout << "=== Text editor ===" << std::endl;
+    std::cout << "Enter - new line, Esc - exit" << std::endl;
+    std::cout << "==========================" << std::endl << std::endl;
+
+    for (int i = 0; i < lines_.size(); i++) {
+      std::cout << (i + 1) << ": ";
+
+      if (i == cursor_row_) {
+        std::string line = lines_[i];
+
+        std::cout << line.substr(0, cursor_col_);
+
+        std::cout << "|";
+
+        if (cursor_col_ < line.length()) {
+          std::cout << line.substr(cursor_col_);
         }
-        else {
-            current_line += text;
-        }
+      } else {
+        std::cout << lines_[i];
+      }
 
-        cursor_col += text.length();
-        RefreshDisplay();
+      std::cout << std::endl;
     }
 
-    int DeleteText(int k) {
-        int deleted = 0;
+    std::cout << std::endl
+              << "position: line " << (cursor_row_ + 1) << ", position "
+              << cursor_col_ << std::endl;
+  }
 
-        for (int i = 0; i < k; i++) {
-            if (cursor_col > 0) {
-                // Удаляем символ слева от курсора
-                std::string& current_line = lines[cursor_row];
-                current_line.erase(cursor_col - 1, 1);
-                cursor_col--;
-                deleted++;
-            }
-            else if (cursor_row > 0) {
-                // Переход на конец предыдущей строки
-                std::string& prev_line = lines[cursor_row - 1];
-                std::string& current_line = lines[cursor_row];
+ public:
+  void RunInteractive() {
+    std::cout << "type smth..." << std::endl << std::endl;
 
-                cursor_col = prev_line.length();
-                prev_line += current_line;
-                lines.erase(lines.begin() + cursor_row);
-                cursor_row--;
-                deleted++;
-            }
-        }
+    RefreshDisplay();
 
-        RefreshDisplay();
-        return deleted;
+    while (true) {
+      char key = _getch();
+
+      if (key == 27) {
+        break;
+      } else if (key == 0 || key == -32) {
+        key = _getch();
+        HandleKeyPress(key);
+      } else {
+        HandleKeyPress(key);
+      }
     }
 
-    std::string CursorLeft(int k) {
-        for (int i = 0; i < k; i++) {
-            if (cursor_col > 0) {
-                cursor_col--;
-            }
-            else if (cursor_row > 0) {
-                cursor_row--;
-                cursor_col = lines[cursor_row].length();
-            }
-        }
-        RefreshDisplay();
-        return GetTextBeforeCursor();
+    std::cout << std::endl << "work ended" << std::endl;
+  }
+
+  void PrintText() { RefreshDisplay(); }
+
+  std::string GetFullText() {
+    std::string result;
+    for (int i = 0; i < lines_.size(); i++) {
+      result += lines_[i];
+      if (i < lines_.size() - 1) {
+        result += "\n";
+      }
     }
+    return result;
+  }
 
-    std::string CursorRight(int k) {
-        for (int i = 0; i < k; i++) {
-            if (cursor_col < lines[cursor_row].length()) {
-                cursor_col++;
-            }
-            else if (cursor_row < lines.size() - 1) {
-                cursor_row++;
-                cursor_col = 0;
-            }
-        }
-        RefreshDisplay();
-        return GetTextBeforeCursor();
-    }
-
-    std::string CursorUp(int k) {
-        for (int i = 0; i < k; i++) {
-            if (cursor_row > 0) {
-                cursor_row--;
-                cursor_col = std::min(cursor_col,
-                    static_cast<int>(lines[cursor_row].length()));
-            }
-        }
-        RefreshDisplay();
-        return GetTextBeforeCursor();
-    }
-
-    std::string CursorDown(int k) {
-        for (int i = 0; i < k; i++) {
-            if (cursor_row < lines.size() - 1) {
-                cursor_row++;
-                cursor_col = std::min(cursor_col,
-                    static_cast<int>(lines[cursor_row].length()));
-            }
-        }
-        RefreshDisplay();
-        return GetTextBeforeCursor();
-    }
-
-    void AddNewLine() {
-        std::string& current_line = lines[cursor_row];
-
-        if (cursor_col < current_line.length()) {
-            std::string new_line = current_line.substr(cursor_col);
-            current_line = current_line.substr(0, cursor_col);
-            lines.insert(lines.begin() + cursor_row + 1, new_line);
-        }
-        else {
-            lines.insert(lines.begin() + cursor_row + 1, "");
-        }
-
-        cursor_row++;
-        cursor_col = 0;
-        RefreshDisplay();
-    }
-
-private:
-    std::string GetTextBeforeCursor() {
-        std::string& current_line = lines[cursor_row];
-        int start_pos = std::max(0, cursor_col - 10);
-        return current_line.substr(start_pos, cursor_col - start_pos);
-    }
-
-    void RefreshDisplay() {
-        system("cls");  // Очистка экрана (Windows)
-
-        std::cout << "=== Text editor ===" << std::endl;
-        std::cout << "Enter - new line, Esc - exit" << std::endl;
-        std::cout << "==========================" << std::endl << std::endl;
-
-        for (int i = 0; i < lines.size(); i++) {
-            // Показываем номер строки
-            std::cout << (i + 1) << ": ";
-
-            // Выводим строку
-            if (i == cursor_row) {
-                // Выделяем текущую строку курсором
-                std::string line = lines[i];
-
-                // Текст до курсора
-                std::cout << line.substr(0, cursor_col);
-
-                // Курсор (мигающий символ)
-                std::cout << "|";
-
-                // Текст после курсора
-                if (cursor_col < line.length()) {
-                    std::cout << line.substr(cursor_col);
-                }
-            }
-            else {
-                std::cout << lines[i];
-            }
-
-            std::cout << std::endl;
-        }
-
-        std::cout << std::endl << "position: line " << (cursor_row + 1) << ", position "
-            << cursor_col << std::endl;
-    }
-
-public:
-    // Запуск интерактивного режима
-    void RunInteractive() {
-        std::cout << "type smth..." << std::endl << std::endl;
-
-        RefreshDisplay();
-
-        while (true) {
-            char key = _getch();  // Чтение клавиши без ожидания Enter
-
-            if (key == 27) {  // Esc - выход
-                break;
-            }
-            else if (key == 0 || key == -32) {
-                // Обработка специальных клавиш (стрелки)
-                key = _getch();
-                HandleKeyPress(key);
-            }
-            else {
-                HandleKeyPress(key);
-            }
-        }
-
-        std::cout << std::endl << "work ended" << std::endl;
-    }
-
-    // Методы для программируемого использования
-    void PrintText() { RefreshDisplay(); }
-
-    std::string GetFullText() {
-        std::string result;
-        for (int i = 0; i < lines.size(); i++) {
-            result += lines[i];
-            if (i < lines.size() - 1) {
-                result += "\n";
-            }
-        }
-        return result;
-    }
-
-    std::pair<int, int> GetCursorPosition() {
-        return std::make_pair(cursor_row, cursor_col);
-    }
+  std::pair<int, int> GetCursorPosition() {
+    return std::make_pair(cursor_row_, cursor_col_);
+  }
 };
 
 int main() {
-    TextEditor editor;
+  TextEditor editor;
 
-    editor.RunInteractive();
+  editor.RunInteractive();
 
-    return 0;
+  return 0;
 }
