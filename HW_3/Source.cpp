@@ -3,7 +3,6 @@
 #include <vector>
 
 class BankAccount {
-<<<<<<< HEAD
  private:
   std::string account_number_;
   double balance_;
@@ -248,4 +247,3 @@ int main() {
 
   return 0;
 }
->>>>>>> dbdbc1deaf4d3f46cd5c423f4275f66a135c5b73
