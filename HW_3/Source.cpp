@@ -123,7 +123,9 @@ int main() {
 
   return 0;
 }
-private : std::string account_number_;
+
+private:
+std::string account_number_;
 double balance_;
 std::string account_holder_;
 
