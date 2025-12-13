@@ -63,7 +63,7 @@ Substring String::operator[](size_t start) const {
   return Substring(*this, start);
 }
 
-String Substring::operator[](size_t end) const{
+String Substring::operator[](size_t end) const {
   if (end < start) {
     return String();
   } else {
