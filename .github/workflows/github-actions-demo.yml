@@ -58,7 +58,6 @@ jobs:
         --suppress=missingIncludeSystem \
         --suppress=useStlAlgorithm \
         --suppress=noExplicitConstructor
-        --suppress=unusedFunction
   
     # 5. Сборка с Санитайзерами (теперь используем ${{ env.SRC_DIR }})
     - name: Build with Sanitizers
