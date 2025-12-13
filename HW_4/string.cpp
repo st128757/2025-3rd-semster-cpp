@@ -52,7 +52,7 @@ void String::Print() const {
 }
 
 Substring::Substring(const String& string, size_t start)
-    : string(string), start(start) {}
+    : start(start), string(string) {}
 
 Substring::~Substring() {}
 
@@ -63,7 +63,7 @@ Substring String::operator[](size_t start) const {
   return Substring(*this, start);
 }
 
-String Substring::operator[](size_t end) {
+String Substring::operator[](size_t end) const{
   if (end < start) {
     return String();
   } else {
@@ -73,7 +73,7 @@ String Substring::operator[](size_t end) {
     for (size_t i = 0; i < length; ++i) {
       str[i] = temp_string.GetStr()[start + i];
     }
-    str[length + 1] = '\0';
+    str[length] = '\0';
     return String(str);
   }
 }
