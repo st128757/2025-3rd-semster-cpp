@@ -35,7 +35,7 @@ struct Substring {
   Substring(const Substring& other);
   ~Substring();
 
-  String operator[](size_t end);
+  String operator[](size_t end) const;
 
  private:
   size_t start;
