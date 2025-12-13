@@ -74,6 +74,8 @@ String Substring::operator[](size_t end) const {
       str[i] = temp_string.GetStr()[start + i];
     }
     str[length] = '\0';
-    return String(str);
+    String result(str);
+    delete[] str;
+    return result;
   }
 }
