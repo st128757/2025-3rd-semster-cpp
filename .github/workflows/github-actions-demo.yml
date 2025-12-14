@@ -36,6 +36,20 @@ jobs:
       run: |
         find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
         git diff --exit-code
+
+    - name: Run Cppcheck (Linter)
+      run: |
+        cppcheck \
+        --enable=all \
+        --inconclusive \
+        --error-exitcode=1 \
+        ${{ env.SRC_DIR }}/ \
+        --suppress=missingIncludeSystem \
+        --suppress=unusedFunction \
+        --suppress=functionConst \
+        --suppress=constVariableReference \
+        --suppress=missingInclude:HW_2+GTest/pch.h \
+        --suppress=missingInclude:HW_2+GTest/test.cpp
         
     - name: Static analysis
       run: |
