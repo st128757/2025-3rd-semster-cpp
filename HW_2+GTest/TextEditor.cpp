@@ -139,7 +139,7 @@ void TextEditor::AddNewLine() {
 }
 
 std::string TextEditor::GetTextBeforeCursor() {
-  std::string& current_line = lines_[cursor_row_];
+  const std::string& current_line = lines_[cursor_row_];
   int start_pos = std::max(0, cursor_col_ - 10);
   return current_line.substr(start_pos, cursor_col_ - start_pos);
 }
@@ -199,7 +199,7 @@ void TextEditor::RunInteractive() {
 
 void TextEditor::PrintText() { RefreshDisplay(); }
 
-std::string TextEditor::GetFullText() {
+std::string TextEditor::GetFullText() const {
   std::string result;
   for (int i = 0; i < lines_.size(); i++) {
     result += lines_[i];
@@ -210,6 +210,6 @@ std::string TextEditor::GetFullText() {
   return result;
 }
 
-std::pair<int, int> TextEditor::GetCursorPosition() {
+std::pair<int, int> TextEditor::GetCursorPosition() const {
   return std::make_pair(cursor_row_, cursor_col_);
 }
