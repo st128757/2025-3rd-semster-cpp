@@ -60,23 +60,15 @@ jobs:
           --error-exitcode=1 \
           .
 
-    # 5. Сборка и запуск тестов
+      # 5. Сборка и запуск тестов
     - name: Build and run tests
       run: |
-        echo "Сборка тестов..."
-        make clean
-        make test
-        echo "Запуск тестов..."
-        if [ -f "test_runner" ]; then
-          ./test_runner
-        elif [ -f "build/test_runner" ]; then
-          ./build/test_runner
-        else
-          echo "Ошибка: test_runner не найден"
-          echo "Ищем файлы..."
-          find . -type f -name "*test*" | head -10
-          exit 1
-        fi
+        echo "=== Сборка тестов ==="
+        make -f makefile clean
+        make -f makefile test
+        
+        echo "=== Запуск тестов ==="
+        ./test_runner
 
     # 6. Сборка с санитайзерами
     - name: Build with sanitizers
