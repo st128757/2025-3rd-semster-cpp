@@ -1,6 +1,13 @@
 #pragma once
 
-#include <conio.h>
+#ifdef _WIN32
+    #include <conio.h>
+#else
+    // Для Linux/Unix эмуляция _getch()
+    #include <termios.h>
+    #include <unistd.h>
+    #include <cstdio>
+#endif
 
 #include <algorithm>
 #include <iostream>
