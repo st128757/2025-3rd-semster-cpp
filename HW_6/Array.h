@@ -41,7 +41,7 @@ class Array {
 
     for (int i = 1; i < size; ++i) {
       if (array_[i] < min_val) {
-        min_val = min_val;
+        min_val = array_[i];
       }
     }
     return min_val;
