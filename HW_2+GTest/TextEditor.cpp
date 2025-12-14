@@ -1,6 +1,5 @@
-#include "TextEditor.h"
-
 #include "pch.h"
+#include "TextEditor.h"
 
 TextEditor::TextEditor() : lines_{""}, cursor_row_(0), cursor_col_(0) {}
 
