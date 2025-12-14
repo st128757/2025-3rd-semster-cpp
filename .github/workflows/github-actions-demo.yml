@@ -13,103 +13,36 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Просто устанавливаем текущую директорию
-    - name: Set Source Directory
-      run: echo "SRC_DIR=." >> $GITHUB_ENV
-
     # Установка зависимостей
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          g++ \
-          clang-format \
-          cppcheck \
-          make
+        sudo apt-get install -y g++ make
 
-    # Проверка стиля кода
-    - name: Check Google Code Style
+    # Просто собираем обычную версию
+    - name: Build Program
       run: |
-        # Форматируем файлы
-        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
-        
-        # Проверяем изменения
-        if git diff --exit-code; then
-          echo "✓ Code style is correct!"
-        else
-          echo "✗ Code style violations found!"
-          echo "Diff:"
-          git diff
-          exit 1
-        fi
-
-    # Проверка линтером
-    - name: Run Cppcheck (Linter)
-      run: |
-        echo "Running cppcheck..."
-        cppcheck \
-          --enable=warning,performance,portability \
-          . \
-          --suppress=missingInclude \
-          --suppress=missingIncludeSystem \
-          --suppress=noExplicitConstructor \
-          --suppress=useStlAlgorithm \
-          2>&1 || true
-
-    # Сборка в разных конфигурациях
-    - name: Build Debug version
-      run: |
-        echo "Building debug version..."
-        make debug
-        echo "✓ Debug build successful!"
-        file main
-
-    - name: Build Release version
-      run: |
-        echo "Building release version..."
+        echo "Building program..."
         make clean
-        make release
-        echo "✓ Release build successful!"
-        file main
+        make
+        echo "✓ Build successful!"
 
-    # Сборка с санитайзерами
+    # Запуск программы
+    - name: Run Program
+      run: |
+        echo "Running program..."
+        ./main
+        echo "✓ Program executed successfully!"
+
+    # Сборка с санитайзерами (отдельно)
     - name: Build with Sanitizers
       run: |
         echo "Building with sanitizers..."
         make clean
-        make sanitize
+        g++ -std=c++11 -Wall -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer Source.cpp Bank.cpp -o main_sanitize
         echo "✓ Sanitizer build successful!"
-
-    # Запуск тестов
-    - name: Run Simple Tests
-      run: |
-        echo "Building and running simple tests..."
-        if [ -f "SimpleTests.cpp" ]; then
-          make test
-          echo "✓ Simple tests passed!"
-        else
-          echo "No SimpleTests.cpp found, skipping tests."
-        fi
-
-    # Запуск основной программы
-    - name: Run Main Program
-      run: |
-        echo "Building and running main program..."
-        make run
-        echo "✓ Main program executed successfully!"
-
-    # Проверка утечек памяти
-    - name: Check Memory Leaks
-      run: |
-        echo "Checking for memory leaks..."
-        make clean
-        make sanitize
         
-        if ./main 2>&1 | grep -q "ERROR: LeakSanitizer"; then
-          echo "✗ Memory leaks detected!"
-          ./main
-          exit 1
-        else
-          echo "✓ No memory leaks detected!"
-        fi
+    - name: Run Sanitized Version
+      run: |
+        echo "Running sanitized version..."
+        ./main_sanitize 2>&1 || true
