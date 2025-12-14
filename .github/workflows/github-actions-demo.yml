@@ -9,18 +9,26 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Find and build
+    - name: Install dependencies
       run: |
-        # Находим все .cpp файлы кроме тестов
-        CPP_FILES=$(find . -name "*.cpp" ! -name "*Test*" ! -name "*test*" | tr '\n' ' ')
+        sudo apt-get update
+        sudo apt-get install -y g++ libgtest-dev cmake
         
-        if [ -z "$CPP_FILES" ]; then
-          echo "Error: No .cpp files found!"
-          exit 1
-        fi
+    - name: Build Google Test
+      run: |
+        cd /usr/src/gtest
+        sudo cmake CMakeLists.txt
+        sudo make
+        sudo cp lib/*.a /usr/lib
+        cd -
         
-        echo "Found files: $CPP_FILES"
-        g++ -std=c++11 -Wall $CPP_FILES -o main
+    - name: Build main program (без тестов)
+      run: |
+        cd HW_3+GTest
+        # Собираем только основные файлы без pch.h
+        g++ -std=c++11 -Wall -I. main.cpp Bank.cpp -o main
         
-    - name: Run
-      run: ./main
+    - name: Run program
+      run: |
+        cd HW_3+GTest
+        ./main
