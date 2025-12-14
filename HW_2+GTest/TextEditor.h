@@ -35,6 +35,6 @@ class TextEditor {
   void RunInteractive();
   void PrintText();
 
-  std::string GetFullText();
-  std::pair<int, int> GetCursorPosition();
+  std::string GetFullText() const;
+  std::pair<int, int> GetCursorPosition() const;
 };
