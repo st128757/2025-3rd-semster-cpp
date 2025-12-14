@@ -1,10 +1,6 @@
-name: Build and Run
+name: CI
 
-on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -13,11 +9,18 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install g++
-      run: sudo apt-get update && sudo apt-get install -y g++
-    
-    - name: Build
-      run: g++ -std=c++11 -Wall Source.cpp Bank.cpp -o main
-    
+    - name: Find and build
+      run: |
+        # Находим все .cpp файлы кроме тестов
+        CPP_FILES=$(find . -name "*.cpp" ! -name "*Test*" ! -name "*test*" | tr '\n' ' ')
+        
+        if [ -z "$CPP_FILES" ]; then
+          echo "Error: No .cpp files found!"
+          exit 1
+        fi
+        
+        echo "Found files: $CPP_FILES"
+        g++ -std=c++11 -Wall $CPP_FILES -o main
+        
     - name: Run
       run: ./main
