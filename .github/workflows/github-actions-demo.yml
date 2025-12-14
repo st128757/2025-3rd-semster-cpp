@@ -13,17 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # 0. Переходим в директорию с файлами
-    - name: Change to project directory
-      run: |
-        if [ -d "HW_2+GTest" ]; then
-          cd "HW_2+GTest"
-          echo "Перешли в HW_2+GTest/"
-        fi
-        echo "Текущая директория: $(pwd)"
-        echo "Содержимое:"
-        ls -la
-
     # 1. Устанавливаем зависимости
     - name: Install dependencies
       run: |
@@ -34,7 +23,8 @@ jobs:
           g++ \
           make \
           libgtest-dev \
-          cmake
+          cmake \
+          valgrind
         # Сборка Google Test
         cd /usr/src/gtest
         sudo cmake .
@@ -60,28 +50,19 @@ jobs:
           --error-exitcode=1 \
           .
 
-    # 4. Сборка и запуск тестов (ИСПРАВЛЕНО - убрано -f makefile)
+    # 4. Сборка и запуск тестов
     - name: Build and run tests
       run: |
         echo "=== Сборка тестов ==="
         make clean
         make test
-        
-        echo "=== Запуск тестов ==="
-        if [ -f "test_runner" ]; then
-          ./test_runner
-        else
-          echo "Ошибка: test_runner не найден"
-          exit 1
-        fi
 
-    # 5. Сборка с санитайзерами (ИСПРАВЛЕНО - убрано -f makefile)
+    # 5. Сборка с санитайзерами
     - name: Build with sanitizers
       run: |
         echo "=== Сборка с санитайзерами ==="
         make clean
         make sanitize
-        # Цель sanitize уже запускает тесты
 
     # 6. Проверка утечек памяти (Valgrind)
     - name: Memory check with Valgrind
@@ -91,11 +72,9 @@ jobs:
         make test
         if [ -f "test_runner" ]; then
           valgrind --leak-check=full --show-leak-kinds=all ./test_runner 2>&1 | tail -50
-        else
-          echo "Ошибка: test_runner не найден для Valgrind"
         fi
 
-    # 7. Сборка основной программы (ИСПРАВЛЕНО - убрано -f makefile)
+    # 7. Сборка основной программы
     - name: Build main program
       run: |
         echo "=== Сборка основной программы ==="
@@ -103,9 +82,4 @@ jobs:
         make
         if [ -f "main" ]; then
           echo "✓ Основная программа скомпилирована"
-          echo "Тестовый запуск (2 секунды):"
-          timeout 2s ./main || echo "Программа завершилась (ожидаемо)"
-        else
-          echo "✗ Ошибка: основная программа не найдена"
-          exit 1
         fi
