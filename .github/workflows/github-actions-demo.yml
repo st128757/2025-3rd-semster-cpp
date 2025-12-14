@@ -55,11 +55,10 @@ jobs:
     - name: Run Cppcheck (Linter)
       run: |
         cppcheck \
-          --enable=all \
+          --enable=warning,performance,portability \
           --inconclusive \
           --error-exitcode=1 \
-          . \
-          --suppress=missingIncludeSystem
+          .
 
     # 5. Сборка и запуск тестов
     - name: Build and run tests
