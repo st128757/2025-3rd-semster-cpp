@@ -1,0 +1,101 @@
+name: C++ CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        sanitizer: [none, address, undefined]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          clang-format \
+          cppcheck \
+          valgrind \
+          libgtest-dev
+        # Сборка Google Test
+        cd /usr/src/gtest
+        sudo cmake .
+        sudo make
+        sudo cp lib/*.a /usr/lib
+        
+    - name: Format check
+      run: |
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+        git diff --exit-code
+        
+    - name: Static analysis
+      run: |
+        cppcheck \
+          --enable=all \
+          --inconclusive \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --error-exitcode=1 \
+          .
+          
+    - name: Build
+      run: |
+        if [ "${{ matrix.sanitizer }}" = "address" ]; then
+          make sanitize
+        elif [ "${{ matrix.sanitizer }}" = "undefined" ]; then
+          make sanitize
+        else
+          make
+        fi
+        
+    - name: Run tests
+      run: |
+        if [ -f build/test_runner ]; then
+          ./build/test_runner
+        fi
+        
+    - name: Memory check
+      if: matrix.sanitizer == 'none'
+      run: |
+        if [ -f build/main ]; then
+          valgrind --leak-check=full --error-exitcode=1 ./build/main --test-mode
+        fi
+        
+    - name: Package artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: text-editor-${{ matrix.sanitizer }}
+        path: build/
+        
+  deploy-docs:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate documentation
+        run: |
+          echo "# Text Editor Documentation" > README.md
+          echo "Build status: ![CI](https://github.com/${{ github.repository }}/workflows/C++%20CI/badge.svg)" >> README.md
+          echo "" >> README.md
+          echo "## Building" >> README.md
+          echo "\`\`\`bash" >> README.md
+          echo "make          # Build all" >> README.md
+          echo "make test     # Run tests" >> README.md
+          echo "make sanitize # Build with sanitizers" >> README.md
+          echo "\`\`\`" >> README.md
+          
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
