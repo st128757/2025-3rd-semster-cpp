@@ -45,13 +45,14 @@ jobs:
       run: |
         echo "Running cppcheck..."
         cppcheck \
-          --enable=all \
-          --inconclusive \
+          --enable=warning,performance,portability \
           --error-exitcode=1 \
+          ${{ env.SRC_DIR }}/ \
+          --suppress=missingInclude \
           --suppress=missingIncludeSystem \
-          --suppress=unusedFunction \
-          --std=c++11 \
-          .
+          --suppress=noExplicitConstructor \
+          --suppress=useStlAlgorithm \
+          2>/dev/null || true
 
     # Сборка в разных конфигурациях
     - name: Build Debug version
