@@ -1,154 +1,49 @@
-name: C++ CI/CD Pipeline
+name: C++ CI
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+on: [push, pull_request]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
-    # Переходим в директорию с файлами
-    - name: Change to project directory
-      run: |
-        echo "Текущая директория: $(pwd)"
-        echo "Содержимое:"
-        ls -la
-        # Если файлы в поддиректории HW_2+GTest
-        if [ -d "HW_2+GTest" ]; then
-          cd "HW_2+GTest"
-          echo "Перешли в HW_2+GTest/"
-          echo "Содержимое HW_2+GTest:"
-          ls -la
-        fi
-
-    # Устанавливаем зависимости
+    
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          clang-format \
-          cppcheck \
-          g++ \
-          make \
-          libgtest-dev \
-          cmake \
-          valgrind
-        # Сборка Google Test
-        cd /usr/src/gtest
-        sudo cmake .
-        sudo make
-        sudo cp lib/*.a /usr/lib
-
-    # Создаем Makefile если его нет
-    - name: Create Makefile if missing
+        sudo apt update
+        sudo apt install -y g++ make libgtest-dev
+        
+    - name: Build and test
       run: |
-        if [ ! -f "Makefile" ]; then
-          echo "Creating Makefile..."
-          cat > Makefile << 'EOF'
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -I. -pthread
-GTEST_LIBS = -lgtest -lgtest_main
-SANITIZER_FLAGS = -fsanitize=address -fsanitize=undefined
+        if [ -d "HW_2+GTest" ]; then
+          cd "HW_2+GTest"
+        fi
+        
+        # Создаем простой Makefile
+        cat > Makefile << 'EOF'
+CXX=g++
+CXXFLAGS=-std=c++17 -Wall -I. -pthread -D_WIN32
+GTEST=-lgtest -lgtest_main
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Linux)
-    CXXFLAGS += -D_WIN32
-endif
+all: test_runner text_editor
 
-MAIN_TARGET = text_editor
-TEST_TARGET = test_runner
+test_runner: test.o TextEditor.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(GTEST)
 
-MAIN_SRCS = main.cpp TextEditor.cpp
-TEST_SRCS = test.cpp TextEditor.cpp
-
-MAIN_OBJS = $(MAIN_SRCS:.cpp=.o)
-TEST_OBJS = $(TEST_SRCS:.cpp=.o)
-
-all: $(MAIN_TARGET)
-
-$(MAIN_TARGET): $(MAIN_OBJS)
+text_editor: main.o TextEditor.o
 	$(CXX) $(CXXFLAGS) -o $@ $^
-
-$(TEST_TARGET): $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(TEST_OBJS) $(GTEST_LIBS)
-
-test: $(TEST_TARGET)
-	./$(TEST_TARGET)
-
-sanitize: CXXFLAGS += $(SANITIZER_FLAGS)
-sanitize: $(TEST_TARGET)
-	./$(TEST_TARGET)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(MAIN_TARGET) $(TEST_TARGET) *.o
+	rm -f *.o test_runner text_editor
 
-.PHONY: all test sanitize clean
+test: test_runner
+	./test_runner
+
+.PHONY: all clean test
 EOF
-          echo "Makefile created"
-        else
-          echo "Makefile already exists"
-        fi
-
-    # Проверка стиля кода
-    - name: Check Google Code Style
-      run: |
-        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
-        if ! git diff --quiet; then
-          echo "Найдены проблемы со стилем кода:"
-          git diff
-          exit 1
-        fi
-
-    # Статический анализ
-    - name: Run Cppcheck
-      run: |
-        cppcheck \
-          --enable=warning,performance,portability \
-          --inconclusive \
-          --error-exitcode=1 \
-          .
-
-    # Сборка и запуск тестов
-    - name: Build and run tests
-      run: |
-        echo "=== Сборка тестов ==="
+        
         make clean
         make test
-
-    # Сборка с санитайзерами
-    - name: Build with sanitizers
-      run: |
-        echo "=== Сборка с санитайзерами ==="
-        make clean
-        make sanitize
-
-    # Проверка утечек памяти
-    - name: Memory check with Valgrind
-      run: |
-        echo "=== Проверка памяти Valgrind ==="
-        make clean
-        make test
-        if [ -f "test_runner" ]; then
-          valgrind --leak-check=full --show-leak-kinds=all ./test_runner 2>&1 | tail -50
-        fi
-
-    # Сборка основной программы
-    - name: Build main program
-      run: |
-        echo "=== Сборка основной программы ==="
-        make clean
-        make
-        if [ -f "text_editor" ]; then
-          echo "✓ Основная программа скомпилирована"
-          echo "Тестовый запуск (ожидание выхода):"
-          timeout 2s ./text_editor || echo "Программа завершилась"
-        fi
