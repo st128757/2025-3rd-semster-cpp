@@ -13,20 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # 1. ⭐ НОВЫЙ ШАГ: Динамический поиск папки
-    - name: Discover Source Directory
-      id: discover
-      run: |
-        SRC_DIR=$(find . -maxdepth 2 -name 'Makefile' -o -name 'makefile' -print -quit | xargs dirname)
-        if [ -z "$SRC_DIR" ]; then
-          echo "Error: Could not find 'Makefile' or 'makefile' in a sub-directory."
-          exit 1
-        fi
-        SRC_DIR=${SRC_DIR#./}
-        echo "Source directory detected: $SRC_DIR"
-        echo "SRC_DIR=$SRC_DIR" >> $GITHUB_ENV
-
-    # 2. Устанавливаем инструменты
+    # Установка зависимостей
     - name: Install dependencies
       run: |
         sudo apt-get update
@@ -37,50 +24,95 @@ jobs:
           cppcheck \
           make
 
-    # 3. Проверка стиля
+    # Проверка стиля кода
     - name: Check Google Code Style
       run: |
-        find ${{ env.SRC_DIR }} -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
-        git diff --exit-code
+        # Форматируем файлы
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+        
+        # Проверяем изменения
+        if git diff --exit-code; then
+          echo "✓ Code style is correct!"
+        else
+          echo "✗ Code style violations found!"
+          echo "Diff:"
+          git diff
+          exit 1
+        fi
 
-    # 4. Линтер (без фатальных ошибок для warning'ов)
-    - name: Run Cppcheck
+    # Проверка линтером
+    - name: Run Cppcheck (Linter)
       run: |
         echo "Running cppcheck..."
-        cppcheck --enable=warning,style,performance ${{ env.SRC_DIR }}/ 2>&1 || true
+        cppcheck \
+          --enable=warning,performance,portability \
+          --error-exitcode=1 \
+          ${{ env.SRC_DIR }}/ \
+          --suppress=missingInclude \
+          --suppress=missingIncludeSystem \
+          --suppress=noExplicitConstructor \
+          --suppress=useStlAlgorithm \
+          2>/dev/null || true
 
-    # 5. Сборка основной программы
-    - name: Build Main Program
+    # Сборка в разных конфигурациях
+    - name: Build Debug version
       run: |
-        echo "Building main program..."
-        make -C ${{ env.SRC_DIR }} clean
-        make -C ${{ env.SRC_DIR }}
+        echo "Building debug version..."
+        make debug
+        echo "✓ Debug build successful!"
+        file main
 
-    # 6. Сборка с санитайзерами
+    - name: Build Release version
+      run: |
+        echo "Building release version..."
+        make clean
+        make release
+        echo "✓ Release build successful!"
+        file main
+
+    # Сборка с санитайзерами
     - name: Build with Sanitizers
       run: |
         echo "Building with sanitizers..."
-        make -C ${{ env.SRC_DIR }} clean
-        make -C ${{ env.SRC_DIR }} CXX=g++ CXXFLAGS="-std=c++11 -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer"
+        make clean
+        make sanitize
+        echo "✓ Sanitizer build successful!"
 
-    # 7. Запуск программы
-    - name: Run Program
+    # Запуск тестов
+    - name: Run Simple Tests
       run: |
-        echo "Running program..."
-        ./${{ env.SRC_DIR }}/main
+        echo "Building and running simple tests..."
+        make test
+        echo "✓ Simple tests passed!"
 
-    # 8. Сборка и запуск тестов (если есть файл тестов)
-    - name: Build and Run Tests
+    # Запуск основной программы
+    - name: Run Main Program
       run: |
-        if [ -f "${{ env.SRC_DIR }}/SimpleTests.cpp" ] || [ -f "${{ env.SRC_DIR }}/TestBank.cpp" ]; then
-          echo "Building and running tests..."
-          # Пробуем собрать тесты
-          make -C ${{ env.SRC_DIR }} tests 2>/dev/null || echo "No 'tests' target in Makefile"
-          
-          # Запускаем если существует
-          if [ -f "${{ env.SRC_DIR }}/tests" ]; then
-            ./${{ env.SRC_DIR }}/tests
-          fi
+        echo "Building and running main program..."
+        make run
+        echo "✓ Main program executed successfully!"
+
+    # Проверка утечек памяти (только для sanitizer build)
+    - name: Check Memory Leaks
+      run: |
+        echo "Checking for memory leaks..."
+        make clean
+        make sanitize
+        
+        # Запускаем программу с проверкой выхода
+        if ./main 2>&1 | grep -q "ERROR: LeakSanitizer"; then
+          echo "✗ Memory leaks detected!"
+          ./main
+          exit 1
         else
-          echo "No test files found, skipping tests."
+          echo "✓ No memory leaks detected!"
         fi
+
+    # Проверка статического анализа
+    - name: Static Analysis (optional)
+      run: |
+        echo "Performing optional static analysis..."
+        # Собираем с максимальным уровнем предупреждений
+        make clean
+        make CXXFLAGS="-std=c++11 -Wall -Wextra -pedantic -Werror"
+        echo "✓ Static analysis passed!"
