@@ -14,16 +14,16 @@ tests: SimpleTests.cpp Bank.cpp Bank.h
 	$(CXX) $(CXXFLAGS) SimpleTests.cpp Bank.cpp -o tests
 
 # Debug сборка
-debug: CXXFLAGS += -g -O0 -DDEBUG
-debug: main
+debug:
+	$(CXX) $(CXXFLAGS) -g -O0 -DDEBUG Source.cpp Bank.cpp -o main
 
 # Release сборка
-release: CXXFLAGS += -O2 -DNDEBUG
-release: main
+release:
+	$(CXX) $(CXXFLAGS) -O2 -DNDEBUG Source.cpp Bank.cpp -o main
 
 # Сборка с санитайзерами
-sanitize: CXXFLAGS += -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer
-sanitize: main
+sanitize:
+	$(CXX) $(CXXFLAGS) -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer Source.cpp Bank.cpp -o main
 
 # Очистка
 clean:
