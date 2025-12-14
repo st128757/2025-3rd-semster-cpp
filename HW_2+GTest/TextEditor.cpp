@@ -1,5 +1,26 @@
 #include "TextEditor.h"
 
+#ifndef _WIN32
+char _getch() {
+    char ch;
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    read(STDIN_FILENO, &ch, 1);
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return ch;
+}
+#endif
+
+// Замена system("cls") на system("clear") для Linux
+#ifdef _WIN32
+    #define CLEAR_SCREEN "cls"
+#else
+    #define CLEAR_SCREEN "clear"
+#endif
+
 #include "pch.h"
 
 TextEditor::TextEditor() : lines_{""}, cursor_row_(0), cursor_col_(0) {}
@@ -145,7 +166,7 @@ std::string TextEditor::GetTextBeforeCursor() {
 }
 
 void TextEditor::RefreshDisplay() {
-  system("cls");
+  system(CLEAR_SCREEN);
 
   std::cout << "=== Text editor ===" << std::endl;
   std::cout << "Enter - new line, Esc - exit" << std::endl;
