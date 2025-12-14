@@ -1,33 +1,53 @@
+# Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic -g -I.
-LDFLAGS = -lgtest -lgtest_main -lpthread
+CXXFLAGS = -std=c++17 -Wall -Wextra -I.
+GTEST_FLAGS = -lgtest -lgtest_main -pthread
+SANITIZER_FLAGS = -fsanitize=address -fsanitize=undefined
 
-MAIN_SRCS = TextEditor.cpp main.cpp pch.cpp
-TEST_SRCS = TextEditor.cpp test.cpp pch.cpp
-
-MAIN_TARGET = main
+# Targets
+TARGET = main
 TEST_TARGET = test_runner
 
-.PHONY: all clean test sanitize
+# Source files
+MAIN_SRC = main.cpp TextEditor.cpp pch.cpp
+TEST_SRC = test.cpp TextEditor.cpp pch.cpp
+ALL_SRC = $(MAIN_SRC) $(TEST_SRC)
 
-all: $(MAIN_TARGET)
+# Object files
+MAIN_OBJ = $(MAIN_SRC:.cpp=.o)
+TEST_OBJ = $(TEST_SRC:.cpp=.o)
 
-$(MAIN_TARGET): $(MAIN_SRCS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+# Default target
+all: $(TARGET)
 
-$(TEST_TARGET): $(TEST_SRCS)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+# Main program
+$(TARGET): $(MAIN_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
+# Test runner
+$(TEST_TARGET): $(TEST_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(GTEST_FLAGS)
+
+# Test target (alias)
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
-sanitize: CXXFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer
-sanitize: LDFLAGS += -fsanitize=address,undefined
-sanitize: clean $(TEST_TARGET)
+# Build with sanitizers
+sanitize: CXXFLAGS += $(SANITIZER_FLAGS)
+sanitize: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
-clean:
-	rm -f $(MAIN_TARGET) $(TEST_TARGET) *.o
+# Pattern rule for object files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# Clean build artifacts
+clean:
+	rm -f $(TARGET) $(TEST_TARGET) *.o
+
+# Format code with clang-format
 format:
-	clang-format -i -style=Google *.cpp *.h
+	find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+
+# Phony targets
+.PHONY: all test sanitize clean format
