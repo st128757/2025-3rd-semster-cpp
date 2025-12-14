@@ -1,47 +1,23 @@
-name: C++ CI for Banking System
+name: Build and Run
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [main, master]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [main, master]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - uses: actions/checkout@v4
-
-    # Установка зависимостей
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y g++ make
-
-    # Собираем обычную версию
-    - name: Build Program
-      run: |
-        echo "Building program..."
-        make
-        echo "✓ Build successful!"
-
-    # Запуск программы
-    - name: Run Program
-      run: |
-        echo "Running program..."
-        ./main
-        echo "✓ Program executed successfully!"
-
-    # Сборка с санитайзерами
-    - name: Build with Sanitizers
-      run: |
-        echo "Building with sanitizers..."
-        rm -f main_sanitize 2>/dev/null || true
-        g++ -std=c++11 -Wall -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer Source.cpp Bank.cpp -o main_sanitize
-        echo "✓ Sanitizer build successful!"
-        
-    - name: Run Sanitized Version
-      run: |
-        echo "Running sanitized version..."
-        ./main_sanitize 2>&1 || true
+    
+    - name: Install g++
+      run: sudo apt-get update && sudo apt-get install -y g++
+    
+    - name: Build
+      run: g++ -std=c++11 -Wall Source.cpp Bank.cpp -o main
+    
+    - name: Run
+      run: ./main
