@@ -1,8 +1,8 @@
 #include "TextEditor.h"
 
 int main() {
-    TextEditor editor;
-    editor.RunInteractive();
+  TextEditor editor;
+  editor.RunInteractive();
 
-    return 0;
+  return 0;
 }

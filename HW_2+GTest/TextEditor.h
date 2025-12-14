@@ -1,40 +1,40 @@
 #pragma once
 
-#include <algorithm>
 #include <conio.h>
+
+#include <algorithm>
 #include <iostream>
 #include <string>
-#include <vector>
 #include <utility>
-
+#include <vector>
 
 class TextEditor {
-private:
-	std::vector<std::string> lines_;
-	int cursor_row_;
-	int cursor_col_;
+ private:
+  std::vector<std::string> lines_;
+  int cursor_row_;
+  int cursor_col_;
 
-	std::string GetTextBeforeCursor();
+  std::string GetTextBeforeCursor();
 
-	void RefreshDisplay();
+  void RefreshDisplay();
 
-public:
-	TextEditor();
+ public:
+  TextEditor();
 
-	void HandleKeyPress(char key);
+  void HandleKeyPress(char key);
 
-	void AddText(std::string text);
-	int DeleteText(int k);
-	void AddNewLine();
+  void AddText(std::string text);
+  int DeleteText(int k);
+  void AddNewLine();
 
-	std::string CursorLeft(int k);
-	std::string CursorRight(int k);
-	std::string CursorUp(int k);
-	std::string CursorDown(int k);
+  std::string CursorLeft(int k);
+  std::string CursorRight(int k);
+  std::string CursorUp(int k);
+  std::string CursorDown(int k);
 
-	void RunInteractive();
-	void PrintText();
+  void RunInteractive();
+  void PrintText();
 
-	std::string GetFullText();
-	std::pair<int, int> GetCursorPosition();
+  std::string GetFullText();
+  std::pair<int, int> GetCursorPosition();
 };
