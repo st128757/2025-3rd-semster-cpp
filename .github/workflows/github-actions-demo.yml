@@ -19,11 +19,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y g++ make
 
-    # Просто собираем обычную версию
+    # Собираем обычную версию
     - name: Build Program
       run: |
         echo "Building program..."
-        make clean
         make
         echo "✓ Build successful!"
 
@@ -34,11 +33,11 @@ jobs:
         ./main
         echo "✓ Program executed successfully!"
 
-    # Сборка с санитайзерами (отдельно)
+    # Сборка с санитайзерами
     - name: Build with Sanitizers
       run: |
         echo "Building with sanitizers..."
-        make clean
+        rm -f main_sanitize 2>/dev/null || true
         g++ -std=c++11 -Wall -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer Source.cpp Bank.cpp -o main_sanitize
         echo "✓ Sanitizer build successful!"
         
