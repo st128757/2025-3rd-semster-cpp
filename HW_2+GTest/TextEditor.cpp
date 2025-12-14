@@ -2,23 +2,23 @@
 
 #ifndef _WIN32
 char _getch() {
-    char ch;
-    struct termios oldt, newt;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-    read(STDIN_FILENO, &ch, 1);
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    return ch;
+  char ch;
+  struct termios oldt, newt;
+  tcgetattr(STDIN_FILENO, &oldt);
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  read(STDIN_FILENO, &ch, 1);
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  return ch;
 }
 #endif
 
 // Замена system("cls") на system("clear") для Linux
 #ifdef _WIN32
-    #define CLEAR_SCREEN "cls"
+#define CLEAR_SCREEN "cls"
 #else
-    #define CLEAR_SCREEN "clear"
+#define CLEAR_SCREEN "clear"
 #endif
 
 #include "pch.h"
