@@ -41,7 +41,7 @@ jobs:
         sudo make
         sudo cp lib/*.a /usr/lib
 
-    # 3. Проверка стиля кода
+    # 2. Проверка стиля кода
     - name: Check Google Code Style
       run: |
         find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
@@ -51,8 +51,8 @@ jobs:
           exit 1
         fi
 
-    # 4. Статический анализ
-    - name: Run Cppcheck (Linter)
+    # 3. Статический анализ
+    - name: Run Cppcheck
       run: |
         cppcheck \
           --enable=warning,performance,portability \
@@ -60,55 +60,51 @@ jobs:
           --error-exitcode=1 \
           .
 
-      # 5. Сборка и запуск тестов
+    # 4. Сборка и запуск тестов (ИСПРАВЛЕНО - убрано -f makefile)
     - name: Build and run tests
       run: |
         echo "=== Сборка тестов ==="
-        make -f makefile clean
-        make -f makefile test
+        make clean
+        make test
         
         echo "=== Запуск тестов ==="
-        ./test_runner
-
-    # 6. Сборка с санитайзерами
-    - name: Build with sanitizers
-      run: |
-        echo "Сборка с санитайзерами..."
-        make clean
-        make sanitize
-        echo "Запуск тестов с санитайзерами..."
         if [ -f "test_runner" ]; then
-          ASAN_OPTIONS=detect_leaks=1 ./test_runner
-        elif [ -f "build/test_runner" ]; then
-          ASAN_OPTIONS=detect_leaks=1 ./build/test_runner
+          ./test_runner
+        else
+          echo "Ошибка: test_runner не найден"
+          exit 1
         fi
 
-    # 7. Проверка утечек памяти (Valgrind)
+    # 5. Сборка с санитайзерами (ИСПРАВЛЕНО - убрано -f makefile)
+    - name: Build with sanitizers
+      run: |
+        echo "=== Сборка с санитайзерами ==="
+        make clean
+        make sanitize
+        # Цель sanitize уже запускает тесты
+
+    # 6. Проверка утечек памяти (Valgrind)
     - name: Memory check with Valgrind
       run: |
-        echo "Проверка памяти Valgrind..."
+        echo "=== Проверка памяти Valgrind ==="
         make clean
         make test
         if [ -f "test_runner" ]; then
           valgrind --leak-check=full --show-leak-kinds=all ./test_runner 2>&1 | tail -50
-        elif [ -f "build/test_runner" ]; then
-          valgrind --leak-check=full --show-leak-kinds=all ./build/test_runner 2>&1 | tail -50
+        else
+          echo "Ошибка: test_runner не найден для Valgrind"
         fi
 
-    # 8. Сборка основной программы
+    # 7. Сборка основной программы (ИСПРАВЛЕНО - убрано -f makefile)
     - name: Build main program
       run: |
-        echo "Сборка основной программы..."
+        echo "=== Сборка основной программы ==="
         make clean
         make
         if [ -f "main" ]; then
           echo "✓ Основная программа скомпилирована"
           echo "Тестовый запуск (2 секунды):"
           timeout 2s ./main || echo "Программа завершилась (ожидаемо)"
-        elif [ -f "build/main" ]; then
-          echo "✓ Основная программа скомпилирована в build/"
-          echo "Тестовый запуск (2 секунды):"
-          timeout 2s ./build/main || echo "Программа завершилась (ожидаемо)"
         else
           echo "✗ Ошибка: основная программа не найдена"
           exit 1
