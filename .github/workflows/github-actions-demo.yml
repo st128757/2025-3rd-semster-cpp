@@ -13,32 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # ⭐ ДОБАВЬТЕ ЭТОТ ШАГ - он определяет SRC_DIR
-    - name: Discover Source Directory
-      id: discover
-      run: |
-        # Ищем Makefile в текущей директории или поддиректориях
-        if [ -f "./Makefile" ] || [ -f "./makefile" ]; then
-          SRC_DIR="."
-        else
-          # Ищем в поддиректориях глубиной 1
-          SRC_DIR=$(find . -maxdepth 2 -name 'Makefile' -o -name 'makefile' -print -quit | xargs dirname)
-        fi
-        
-        if [ -z "$SRC_DIR" ]; then
-          echo "Error: Could not find Makefile"
-          exit 1
-        fi
-        
-        # Убираем ./ в начале если есть
-        SRC_DIR=${SRC_DIR#./}
-        if [ -z "$SRC_DIR" ]; then
-          SRC_DIR="."
-        fi
-        
-        echo "Source directory: $SRC_DIR"
-        echo "SRC_DIR=$SRC_DIR" >> $GITHUB_ENV
-
     # Установка зависимостей
     - name: Install dependencies
       run: |
@@ -54,7 +28,7 @@ jobs:
     - name: Check Google Code Style
       run: |
         # Форматируем файлы
-        find ${{ env.SRC_DIR }} -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
         
         # Проверяем изменения
         if git diff --exit-code; then
@@ -66,7 +40,7 @@ jobs:
           exit 1
         fi
 
-    # Проверка линтером - ИСПРАВЛЕНО: используем env.SRC_DIR
+    # Проверка линтером
     - name: Run Cppcheck (Linter)
       run: |
         echo "Running cppcheck..."
@@ -80,58 +54,52 @@ jobs:
           --suppress=useStlAlgorithm \
           2>/dev/null || true
 
-    # Сборка в разных конфигурациях - ИСПРАВЛЕНО: добавляем -C
+    # Сборка в разных конфигурациях
     - name: Build Debug version
       run: |
         echo "Building debug version..."
-        make -C ${{ env.SRC_DIR }} debug
+        make debug
         echo "✓ Debug build successful!"
-        file ${{ env.SRC_DIR }}/main
+        file main
 
     - name: Build Release version
       run: |
         echo "Building release version..."
-        make -C ${{ env.SRC_DIR }} clean
-        make -C ${{ env.SRC_DIR }} release
+        make clean
+        make release
         echo "✓ Release build successful!"
-        file ${{ env.SRC_DIR }}/main
+        file main
 
-    # Сборка с санитайзерами - ИСПРАВЛЕНО: добавляем -C
+    # Сборка с санитайзерами
     - name: Build with Sanitizers
       run: |
         echo "Building with sanitizers..."
-        make -C ${{ env.SRC_DIR }} clean
-        make -C ${{ env.SRC_DIR }} sanitize
+        make clean
+        make sanitize
         echo "✓ Sanitizer build successful!"
 
-    # Запуск тестов - ИСПРАВЛЕНО: проверяем есть ли тесты
+    # Запуск тестов
     - name: Run Simple Tests
       run: |
         echo "Building and running simple tests..."
-        # Проверяем, есть ли файл тестов
-        if [ -f "${{ env.SRC_DIR }}/SimpleTests.cpp" ]; then
-          make -C ${{ env.SRC_DIR }} test
-          echo "✓ Simple tests passed!"
-        else
-          echo "No SimpleTests.cpp found, skipping tests."
-        fi
+        make test
+        echo "✓ Simple tests passed!"
 
-    # Запуск основной программы - ИСПРАВЛЕНО
+    # Запуск основной программы
     - name: Run Main Program
       run: |
         echo "Building and running main program..."
-        make -C ${{ env.SRC_DIR }} run
+        make run
         echo "✓ Main program executed successfully!"
 
-    # Проверка утечек памяти - ИСПРАВЛЕНО
+    # Проверка утечек памяти (только для sanitizer build)
     - name: Check Memory Leaks
       run: |
         echo "Checking for memory leaks..."
-        make -C ${{ env.SRC_DIR }} clean
-        make -C ${{ env.SRC_DIR }} sanitize
+        make clean
+        make sanitize
         
-        # Запускаем программу
-        cd ${{ env.SRC_DIR }}
+        # Запускаем программу с проверкой выхода
         if ./main 2>&1 | grep -q "ERROR: LeakSanitizer"; then
           echo "✗ Memory leaks detected!"
           ./main
@@ -140,10 +108,11 @@ jobs:
           echo "✓ No memory leaks detected!"
         fi
 
-    # Проверка статического анализа - ИСПРАВЛЕНО
+    # Проверка статического анализа
     - name: Static Analysis (optional)
       run: |
         echo "Performing optional static analysis..."
-        make -C ${{ env.SRC_DIR }} clean
-        make -C ${{ env.SRC_DIR }} CXXFLAGS="-std=c++11 -Wall -Wextra -pedantic -Werror"
+        # Собираем с максимальным уровнем предупреждений
+        make clean
+        make CXXFLAGS="-std=c++11 -Wall -Wextra -pedantic -Werror"
         echo "✓ Static analysis passed!"
