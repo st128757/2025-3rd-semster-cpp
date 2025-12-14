@@ -72,8 +72,9 @@ jobs:
     # 5. Сборка и запуск тестов
     - name: Build and run tests
       run: |
-        make clean
-        make test
+        make -f makefile clean
+        make -f makefile test
+        ./test_runner
         if [ -f "build/test_runner" ]; then
           ./build/test_runner
         else
