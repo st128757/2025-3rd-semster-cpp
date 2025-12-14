@@ -1,0 +1,117 @@
+name: C++ CI for Banking System
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Установка зависимостей
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          g++ \
+          clang-format \
+          cppcheck \
+          make
+
+    # Проверка стиля кода
+    - name: Check Google Code Style
+      run: |
+        # Форматируем файлы
+        find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
+        
+        # Проверяем изменения
+        if git diff --exit-code; then
+          echo "✓ Code style is correct!"
+        else
+          echo "✗ Code style violations found!"
+          echo "Diff:"
+          git diff
+          exit 1
+        fi
+
+    # Проверка линтером
+    - name: Run Cppcheck (Linter)
+      run: |
+        echo "Running cppcheck..."
+        cppcheck \
+          --enable=all \
+          --inconclusive \
+          --error-exitcode=1 \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --std=c++11 \
+          .
+
+    # Сборка в разных конфигурациях
+    - name: Build Debug version
+      run: |
+        echo "Building debug version..."
+        make debug
+        echo "✓ Debug build successful!"
+        file main
+
+    - name: Build Release version
+      run: |
+        echo "Building release version..."
+        make clean
+        make release
+        echo "✓ Release build successful!"
+        file main
+
+    # Сборка с санитайзерами
+    - name: Build with Sanitizers
+      run: |
+        echo "Building with sanitizers..."
+        make clean
+        make sanitize
+        echo "✓ Sanitizer build successful!"
+
+    # Запуск тестов
+    - name: Run Simple Tests
+      run: |
+        echo "Building and running simple tests..."
+        make test
+        echo "✓ Simple tests passed!"
+
+    # Запуск основной программы
+    - name: Run Main Program
+      run: |
+        echo "Building and running main program..."
+        make run
+        echo "✓ Main program executed successfully!"
+
+    # Проверка утечек памяти (только для sanitizer build)
+    - name: Check Memory Leaks
+      run: |
+        echo "Checking for memory leaks..."
+        make clean
+        make sanitize
+        
+        # Запускаем программу с проверкой выхода
+        if ./main 2>&1 | grep -q "ERROR: LeakSanitizer"; then
+          echo "✗ Memory leaks detected!"
+          ./main
+          exit 1
+        else
+          echo "✓ No memory leaks detected!"
+        fi
+
+    # Проверка статического анализа
+    - name: Static Analysis (optional)
+      run: |
+        echo "Performing optional static analysis..."
+        # Собираем с максимальным уровнем предупреждений
+        make clean
+        make CXXFLAGS="-std=c++11 -Wall -Wextra -pedantic -Werror"
+        echo "✓ Static analysis passed!"
