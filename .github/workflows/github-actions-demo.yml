@@ -13,6 +13,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # 0. Переходим в директорию с файлами
+    - name: Change to project directory
+      run: |
+        echo "Текущая директория: $(pwd)"
+        echo "Содержимое:"
+        ls -la
+        # Если файлы в поддиректории HW_2+GTest
+        if [ -d "HW_2+GTest" ]; then
+          cd "HW_2+GTest"
+          echo "Перешли в HW_2+GTest/"
+          echo "Содержимое HW_2+GTest:"
+          ls -la
+        fi
+
     # 1. Устанавливаем зависимости
     - name: Install dependencies
       run: |
@@ -31,7 +45,72 @@ jobs:
         sudo make
         sudo cp lib/*.a /usr/lib
 
-    # 2. Проверка стиля кода
+    # 2. Создаем Makefile если его нет
+    - name: Create Makefile if missing
+      run: |
+        if [ ! -f "Makefile" ]; then
+          echo "Creating Makefile..."
+          cat > Makefile << 'EOF'
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -I. -pthread
+GTEST_LIBS = -lgtest -lgtest_main
+SANITIZER_FLAGS = -fsanitize=address -fsanitize=undefined
+
+# Detect OS
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    CXXFLAGS += -D_WIN32
+endif
+
+# Targets
+MAIN_TARGET = text_editor
+TEST_TARGET = test_runner
+
+# Source files
+MAIN_SRCS = main.cpp TextEditor.cpp
+TEST_SRCS = test.cpp TextEditor.cpp
+
+# Object files
+MAIN_OBJS = $(MAIN_SRCS:.cpp=.o)
+TEST_OBJS = $(TEST_SRCS:.cpp=.o)
+
+# Default target
+all: $(MAIN_TARGET)
+
+# Main program
+$(MAIN_TARGET): $(MAIN_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+# Test runner
+$(TEST_TARGET): $(TEST_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(TEST_OBJS) $(GTEST_LIBS)
+
+# Build and run tests
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+# Build with sanitizers
+sanitize: CXXFLAGS += $(SANITIZER_FLAGS)
+sanitize: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+# Pattern rule for object files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean build artifacts
+clean:
+	rm -f $(MAIN_TARGET) $(TEST_TARGET) *.o
+
+.PHONY: all test sanitize clean
+EOF
+          echo "Makefile created"
+        else
+          echo "Makefile already exists"
+        fi
+
+    # 3. Проверка стиля кода
     - name: Check Google Code Style
       run: |
         find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i -style=Google
@@ -41,7 +120,7 @@ jobs:
           exit 1
         fi
 
-    # 3. Статический анализ
+    # 4. Статический анализ
     - name: Run Cppcheck
       run: |
         cppcheck \
@@ -50,21 +129,21 @@ jobs:
           --error-exitcode=1 \
           .
 
-    # 4. Сборка и запуск тестов
+    # 5. Сборка и запуск тестов
     - name: Build and run tests
       run: |
         echo "=== Сборка тестов ==="
         make clean
         make test
 
-    # 5. Сборка с санитайзерами
+    # 6. Сборка с санитайзерами
     - name: Build with sanitizers
       run: |
         echo "=== Сборка с санитайзерами ==="
         make clean
         make sanitize
 
-    # 6. Проверка утечек памяти (Valgrind)
+    # 7. Проверка утечек памяти
     - name: Memory check with Valgrind
       run: |
         echo "=== Проверка памяти Valgrind ==="
@@ -74,12 +153,14 @@ jobs:
           valgrind --leak-check=full --show-leak-kinds=all ./test_runner 2>&1 | tail -50
         fi
 
-    # 7. Сборка основной программы
+    # 8. Сборка основной программы
     - name: Build main program
       run: |
         echo "=== Сборка основной программы ==="
         make clean
         make
-        if [ -f "main" ]; then
+        if [ -f "text_editor" ]; then
           echo "✓ Основная программа скомпилирована"
+          echo "Тестовый запуск (ожидание выхода):"
+          timeout 2s ./text_editor || echo "Программа завершилась"
         fi
