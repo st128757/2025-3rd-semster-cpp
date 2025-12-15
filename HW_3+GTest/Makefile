@@ -48,7 +48,7 @@ test_asan: asan
 # Требует установки cpplint: pip install cpplint
 lint:
 	@echo "--- Running cpplint for Google Code Style Check ---"
-	cpplint --root=. --filter=-legal/copyright,-build/include_subdir $(HEADERS) $(BANK_SOURCES) $(TEST_SOURCE) $(MAIN_SOURCE)
+	cpplint --root=. --filter=-legal/copyright,-build/include_subdir Bank.h Bank.cpp test.cpp main.cpp
 
 # Форматирование (для автоматического исправления стиля)
 # Требует установки clang-format
