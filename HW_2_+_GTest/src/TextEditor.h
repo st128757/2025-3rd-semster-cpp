@@ -1,0 +1,48 @@
+#pragma once
+
+#ifdef _WIN32
+#include <conio.h>
+#else
+// Для Linux/Unix эмуляция _getch()
+#include <termios.h>
+#include <unistd.h>
+
+#include <cstdio>
+#endif
+
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+class TextEditor {
+ private:
+  std::vector<std::string> lines_;
+  int cursor_row_;
+  int cursor_col_;
+
+  std::string GetTextBeforeCursor();
+
+  void RefreshDisplay();
+
+ public:
+  TextEditor();
+
+  void HandleKeyPress(char key);
+
+  void AddText(std::string text);
+  int DeleteText(int k);
+  void AddNewLine();
+
+  std::string CursorLeft(int k);
+  std::string CursorRight(int k);
+  std::string CursorUp(int k);
+  std::string CursorDown(int k);
+
+  void RunInteractive();
+  void PrintText();
+
+  std::string GetFullText() const;
+  std::pair<int, int> GetCursorPosition() const;
+};
