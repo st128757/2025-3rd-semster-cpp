@@ -1,34 +1,55 @@
-name: CI
+name: C++ CI with Makefile
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-  build:
+  build-and-test:
+    # Запускаем на последней версии Ubuntu
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install dependencies
+    - name: ⬇️ Checkout code
+      uses: actions/checkout@v4
+
+    # --- 1. Установка инструментов и зависимостей ---
+    - name: ⚙️ Install Tools and GTest
       run: |
         sudo apt-get update
-        sudo apt-get install -y g++ libgtest-dev cmake
+        # Устанавливаем g++, clang-format и libgtest-dev (зависимость Google Test)
+        sudo apt-get install -y g++ clang-format libgtest-dev
+        # Google Test устанавливает только заголовочные файлы, нужно собрать библиотеки.
+        # В большинстве современных систем пакет libgtest-dev уже предоставляет необходимые либы.
+        # Если возникнут проблемы, нужно будет добавить сборку gtest вручную.
         
-    - name: Build Google Test
+    - name: 🐍 Install cpplint (Google Code Style Checker)
       run: |
-        cd /usr/src/gtest
-        sudo cmake CMakeLists.txt
-        sudo make
-        sudo cp lib/*.a /usr/lib
-        cd -
-        
-    - name: Build main program (без тестов)
+        sudo apt-get install -y python3-pip
+        pip3 install cpplint
+
+    # --- 2. Проверка на Google Code Style (Линтер) ---
+    - name: 🔎 Run Code Style Check (cpplint)
+      # Используем цель 'lint' из Makefile
+      run: make lint
+
+    # --- 3. Сборка и Запуск Модульных Тестов (с Санитайзерами) ---
+    
+    # 3.1. Сборка с санитайзерами (ASan и UBSan)
+    - name: 🛠️ Build Tests with Sanitizers
+      # Используем цель 'asan' из Makefile, которая добавляет флаги -fsanitize
+      run: make asan
+
+    # 3.2. Запуск тестов с санитайзерами
+    - name: 🚀 Run Unit Tests with Sanitizers
+      # Используем цель 'test_asan' из Makefile
+      # Если санитайзер обнаружит ошибку, то этот шаг провалится
+      run: make test_asan
+      
+    # 3.3. Сборка и запуск обычных тестов (для полноты)
+    - name: 🧪 Run Standard Unit Tests
       run: |
-        cd HW_3+GTest
-        # Собираем только основные файлы без pch.h
-        g++ -std=c++11 -Wall -I. main.cpp Bank.cpp -o main
-        
-    - name: Run program
-      run: |
-        cd HW_3+GTest
-        ./main
+        make $(TEST_EXEC) # Сборка
+        make test # Запуск
