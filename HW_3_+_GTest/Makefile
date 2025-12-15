@@ -43,12 +43,12 @@ test: $(BIN_DIR)/tests
 
 $(BIN_DIR)/tests: $(TEST_SRC) $(SRCS)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 # Тесты с санитайзерами (Address + Undefined Behavior)
 sanitize: $(TEST_SRC) $(SRCS)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer $(LDFLAGS) $^ -o $(BIN_DIR)/tests_sanitize
+	$(CXX) $(CXXFLAGS) -fsanitize=address,undefined -fno-omit-frame-pointer $^ $(LDFLAGS) -o $(BIN_DIR)/tests_sanitize
 	@echo "Запуск тестов с санитайзерами..."
 	./$(BIN_DIR)/tests_sanitize
 
@@ -73,7 +73,7 @@ lint:
 		echo "Установите clang-tidy: sudo apt-get install clang-tidy"; \
 		exit 1; \
 	fi
-	@find $(SRC_DIR) $(TEST_DIR) -name "*.cpp" -o -name "*.h" | xargs clang-tidy -checks='*' --warnings-as-errors='*'
+	@find $(SRC_DIR) $(TEST_DIR) -name "*.cpp" -o -name "*.h" | xargs -I {} clang-tidy {} -checks='*' --warnings-as-errors='*' --
 
 # Очистка
 clean:
