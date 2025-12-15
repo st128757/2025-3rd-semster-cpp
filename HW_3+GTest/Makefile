@@ -1,13 +1,29 @@
-# Минимальный Makefile
-all: main
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++17 -I.
+LDFLAGS =
 
-main: Source.cpp Bank.cpp Bank.h
-	g++ -std=c++11 -Wall Source.cpp Bank.cpp -o main
+.PHONY: all clean test lint format
+
+all: bank_app unit_tests
+
+bank_app: main.cpp Bank.cpp Bank.h
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+unit_tests: test.cpp Bank.cpp Bank.h
+	$(CXX) $(CXXFLAGS) test.cpp Bank.cpp -o $@ -pthread -lgtest -lgtest_main
+
+test: unit_tests
+	./unit_tests
 
 clean:
-	rm -f main
+	rm -f bank_app unit_tests
 
-run: main
-	./main
+# Линтер
+# Установи cpplint через pip: pip install cpplint
+lint:
+	cpplint --root=. --filter=-legal/copyright,-build/include_subdir Bank.h Bank.cpp test.cpp main.cpp
 
-.PHONY: all clean run
+# Форматирование
+# Установи clang-format: sudo apt install clang-format
+format:
+	clang-format -i Bank.h Bank.cpp test.cpp main.cpp
